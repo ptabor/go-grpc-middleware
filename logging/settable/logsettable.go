@@ -1,6 +1,7 @@
 package grpc_logsettable
 
 import (
+	"io"
 	"sync"
 
 	"google.golang.org/grpc/grpclog"
@@ -11,11 +12,16 @@ type SettableLoggerV2 interface {
 	grpclog.LoggerV2
 	// Sets given logger as the underlying implementation.
 	Set(loggerv2 grpclog.LoggerV2)
+	// Sets `discard` logger as the underlying implementation.
+	Reset()
 }
 
-// New creates a new settable logger.
-func New(log grpclog.LoggerV2) SettableLoggerV2 {
-	return &settableLoggerV2{log: log}
+// ReplaceGrpcLoggerV2 creates and configures SettableLoggerV2 as grpc logger.
+func ReplaceGrpcLoggerV2() SettableLoggerV2 {
+	settable := &settableLoggerV2{}
+	settable.Reset()
+	grpclog.SetLoggerV2(settable)
+	return settable
 }
 
 // SettableLoggerV2 implements SettableLoggerV2
@@ -28,6 +34,10 @@ func (s *settableLoggerV2) Set(log grpclog.LoggerV2) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.log = log
+}
+
+func (s *settableLoggerV2) Reset() {
+	s.Set(grpclog.NewLoggerV2(io.Discard, io.Discard, io.Discard))
 }
 
 func (s *settableLoggerV2) get() grpclog.LoggerV2 {

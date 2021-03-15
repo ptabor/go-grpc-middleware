@@ -14,8 +14,11 @@ import (
 func Example_SettableLoggerV2_init() {
 	l1 := grpclog.NewLoggerV2(io.Discard, io.Discard, io.Discard)
 	l2 := grpclog.NewLoggerV2(os.Stdout, os.Stdout, os.Stdout)
-	settableLogger := grpc_logsettable.New(l1)
-	grpclog.SetLoggerV2(settableLogger)
+
+	settableLogger := grpc_logsettable.ReplaceGrpcLoggerV2()
+	grpclog.Info("Discarded by default")
+
+	settableLogger.Set(l1)
 	grpclog.Info("Discarded log by l1")
 
 	settableLogger.Set(l2)
@@ -30,7 +33,10 @@ func TestSettableLoggerV2_init(t *testing.T) {
 	l2buffer := &bytes.Buffer{}
 	l2 := grpclog.NewLoggerV2(l2buffer, l2buffer, l2buffer)
 
-	settableLogger := grpc_logsettable.New(l1)
+	settableLogger := grpc_logsettable.ReplaceGrpcLoggerV2()
+	grpclog.Info("Discarded by default")
+
+	settableLogger.Set(l1)
 	grpclog.SetLoggerV2(settableLogger)
 	grpclog.Info("Emitted log by l1")
 
